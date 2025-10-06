@@ -1,16 +1,16 @@
-# React Fiber Lane 系统技术文档
+# React Fiber Lane System Technical Documentation
 
-## 概述
+## Overview
 
-`ReactFiberLane.js` 是 React 18 并发模式的核心调度系统，它实现了一个基于位运算的优先级调度机制。这个系统允许 React 在多个更新之间进行智能的优先级调度，确保用户交互的响应性，同时保持应用的稳定性。
+`ReactFiberLane.js` is the core scheduling system of React 18's concurrent mode, implementing a bitwise-based priority scheduling mechanism. This system allows React to intelligently schedule priorities between multiple updates, ensuring responsiveness of user interactions while maintaining application stability.
 
-## 核心概念
+## Core Concepts
 
-### Lane 和 Lanes
+### Lane and Lanes
 
-- **Lane**: 单个优先级通道，用数字表示（实际上是位掩码）
-- **Lanes**: 多个 Lane 的组合，可以同时包含多个优先级
-- **LaneMap**: 用于存储每个 Lane 相关数据的数组
+- **Lane**: A single priority channel, represented by a number (essentially a bitmask)
+- **Lanes**: A combination of multiple Lanes that can contain multiple priorities simultaneously
+- **LaneMap**: An array used to store data related to each Lane
 
 ```typescript
 export type Lanes = number;
@@ -18,55 +18,55 @@ export type Lane = number;
 export type LaneMap<T> = Array<T>;
 ```
 
-### 位运算设计
+### Bitwise Design
 
-React 使用 31 位整数来表示不同的优先级通道，每个位代表一个特定的优先级：
+React uses 31-bit integers to represent different priority channels, where each bit represents a specific priority:
 
 ```javascript
 export const TotalLanes = 31;
 
-// 基础 Lane 定义
+// Basic Lane definitions
 export const NoLanes: Lanes = 0b0000000000000000000000000000000;
 export const NoLane: Lane = 0b0000000000000000000000000000000;
 
-// 同步优先级
+// Sync priority
 export const SyncLane: Lane = 0b0000000000000000000000000000010;
 export const SyncHydrationLane: Lane = 0b0000000000000000000000000000001;
 
-// 输入连续优先级
+// Input continuous priority
 export const InputContinuousLane: Lane = 0b0000000000000000000000000001000;
 export const InputContinuousHydrationLane: Lane = 0b0000000000000000000000000000100;
 
-// 默认优先级
+// Default priority
 export const DefaultLane: Lane = 0b0000000000000000000000000100000;
 export const DefaultHydrationLane: Lane = 0b0000000000000000000000000010000;
 ```
 
-## 优先级层次结构
+## Priority Hierarchy
 
-### 1. 同步优先级 (Sync Priority)
-- **SyncLane**: 最高优先级，用于紧急更新
-- **SyncHydrationLane**: 服务端渲染的水合更新
-- **InputContinuousLane**: 用户输入相关的连续更新
-- **DefaultLane**: 默认优先级更新
+### 1. Sync Priority
+- **SyncLane**: Highest priority, used for urgent updates
+- **SyncHydrationLane**: Server-side rendering hydration updates
+- **InputContinuousLane**: User input-related continuous updates
+- **DefaultLane**: Default priority updates
 
-### 2. 过渡优先级 (Transition Priority)
-- **TransitionLane1-14**: 14 个过渡 Lane，用于 `startTransition` API
-- **TransitionUpdateLanes**: 立即执行的过渡更新
-- **TransitionDeferredLanes**: 延迟执行的过渡更新
+### 2. Transition Priority
+- **TransitionLane1-14**: 14 transition lanes for `startTransition` API
+- **TransitionUpdateLanes**: Immediately executed transition updates
+- **TransitionDeferredLanes**: Deferred transition updates
 
-### 3. 重试优先级 (Retry Priority)
-- **RetryLane1-4**: 用于 Suspense 重试机制
-- 当组件因数据加载而挂起时，使用这些 Lane 进行重试
+### 3. Retry Priority
+- **RetryLane1-4**: Used for Suspense retry mechanism
+- When components are suspended due to data loading, these lanes are used for retries
 
-### 4. 空闲优先级 (Idle Priority)
-- **IdleLane**: 空闲时执行的更新
-- **OffscreenLane**: 离屏组件的更新
-- **DeferredLane**: 延迟执行的更新
+### 4. Idle Priority
+- **IdleLane**: Updates executed during idle time
+- **OffscreenLane**: Updates for offscreen components
+- **DeferredLane**: Deferred updates
 
-## 核心算法
+## Core Algorithms
 
-### 1. 优先级选择算法
+### 1. Priority Selection Algorithm
 
 ```javascript
 function getHighestPriorityLanes(lanes: Lanes | Lane): Lanes {
@@ -74,20 +74,20 @@ function getHighestPriorityLanes(lanes: Lanes | Lane): Lanes {
   if (pendingSyncLanes !== 0) {
     return pendingSyncLanes;
   }
-  // 根据最高优先级 Lane 返回对应的 Lane 组
+  // Return corresponding Lane group based on highest priority Lane
   switch (getHighestPriorityLane(lanes)) {
     case SyncLane:
       return SyncLane;
     case InputContinuousLane:
       return InputContinuousLane;
-    // ... 其他优先级处理
+    // ... other priority handling
   }
 }
 ```
 
-### 2. 下一个 Lane 选择算法
+### 2. Next Lane Selection Algorithm
 
-`getNextLanes` 函数是调度系统的核心，它决定下一个要处理的更新：
+The `getNextLanes` function is the core of the scheduling system, determining the next update to process:
 
 ```javascript
 export function getNextLanes(
@@ -100,57 +100,57 @@ export function getNextLanes(
     return NoLanes;
   }
 
-  // 优先处理非空闲工作
+  // Prioritize non-idle work
   const nonIdlePendingLanes = pendingLanes & NonIdleLanes;
   if (nonIdlePendingLanes !== NoLanes) {
-    // 检查未阻塞的更新
+    // Check unblocked updates
     const nonIdleUnblockedLanes = nonIdlePendingLanes & ~suspendedLanes;
     if (nonIdleUnblockedLanes !== NoLanes) {
       return getHighestPriorityLanes(nonIdleUnblockedLanes);
     }
-    // 检查被 ping 的更新
+    // Check pinged updates
     const nonIdlePingedLanes = nonIdlePendingLanes & pingedLanes;
     if (nonIdlePingedLanes !== NoLanes) {
       return getHighestPriorityLanes(nonIdlePingedLanes);
     }
   }
   
-  // 处理空闲工作...
+  // Handle idle work...
 }
 ```
 
-### 3. 位运算工具函数
+### 3. Bitwise Utility Functions
 
 ```javascript
-// 获取最高优先级 Lane
+// Get highest priority Lane
 export function getHighestPriorityLane(lanes: Lanes): Lane {
-  return lanes & -lanes; // 使用补码技巧获取最低位
+  return lanes & -lanes; // Use two's complement trick to get lowest bit
 }
 
-// 合并多个 Lane
+// Merge multiple Lanes
 export function mergeLanes(a: Lanes | Lane, b: Lanes | Lane): Lanes {
   return a | b;
 }
 
-// 移除指定的 Lane
+// Remove specified Lanes
 export function removeLanes(set: Lanes, subset: Lanes | Lane): Lanes {
   return set & ~subset;
 }
 
-// 检查是否包含某个 Lane
+// Check if a Lane is included
 export function includesSomeLane(a: Lanes | Lane, b: Lanes | Lane): boolean {
   return (a & b) !== NoLanes;
 }
 ```
 
-## 调度策略
+## Scheduling Strategies
 
-### 1. 中断机制
+### 1. Interruption Mechanism
 
-React 使用 Lane 系统实现智能的中断机制：
+React uses the Lane system to implement intelligent interruption:
 
 ```javascript
-// 如果正在渲染的 Lane 优先级低于新的 Lane，则中断当前渲染
+// If the currently rendering Lane has lower priority than the new Lane, interrupt current render
 if (
   wipLanes !== NoLanes &&
   wipLanes !== nextLanes &&
@@ -159,21 +159,21 @@ if (
   const nextLane = getHighestPriorityLane(nextLanes);
   const wipLane = getHighestPriorityLane(wipLanes);
   if (nextLane >= wipLane) {
-    // 保持当前渲染，不中断
+    // Keep current render, don't interrupt
     return wipLanes;
   }
 }
 ```
 
-### 2. 纠缠机制 (Entanglement)
+### 2. Entanglement Mechanism
 
-当多个更新来自同一个事件源时，它们会被"纠缠"在一起，确保一起执行：
+When multiple updates come from the same event source, they become "entangled" to ensure execution together:
 
 ```javascript
 export function getEntangledLanes(root: FiberRoot, renderLanes: Lanes): Lanes {
   let entangledLanes = renderLanes;
   
-  // 检查纠缠关系
+  // Check entanglement relationships
   const allEntangledLanes = root.entangledLanes;
   if (allEntangledLanes !== NoLanes) {
     const entanglements = root.entanglements;
@@ -190,9 +190,9 @@ export function getEntangledLanes(root: FiberRoot, renderLanes: Lanes): Lanes {
 }
 ```
 
-### 3. 过期机制
+### 3. Expiration Mechanism
 
-为了防止低优先级更新被"饿死"，React 实现了过期机制：
+To prevent low-priority updates from being "starved," React implements an expiration mechanism:
 
 ```javascript
 export function markStarvedLanesAsExpired(
@@ -212,7 +212,7 @@ export function markStarvedLanesAsExpired(
     
     const expirationTime = expirationTimes[index];
     if (expirationTime !== NoTimestamp && expirationTime <= currentTime) {
-      // 标记为过期，强制执行
+      // Mark as expired, force execution
       root.expiredLanes |= lane;
     }
     
@@ -221,75 +221,75 @@ export function markStarvedLanesAsExpired(
 }
 ```
 
-## 实际应用场景
+## Real-world Application Scenarios
 
-### 1. 用户交互优先级
+### 1. User Interaction Priority
 
 ```javascript
-// 用户点击按钮 - 使用 SyncLane
+// User clicks button - uses SyncLane
 const handleClick = () => {
-  setState(newValue); // 立即执行，不被打断
+  setState(newValue); // Execute immediately, cannot be interrupted
 };
 
-// 用户输入 - 使用 InputContinuousLane
+// User input - uses InputContinuousLane
 const handleInput = (e) => {
-  setInputValue(e.target.value); // 连续输入，可以被打断
+  setInputValue(e.target.value); // Continuous input, can be interrupted
 };
 ```
 
-### 2. 数据获取优先级
+### 2. Data Fetching Priority
 
 ```javascript
-// 使用 startTransition 降低优先级
+// Use startTransition to lower priority
 const handleSearch = (query) => {
   startTransition(() => {
-    setSearchResults(fetchResults(query)); // 使用 TransitionLane
+    setSearchResults(fetchResults(query)); // Uses TransitionLane
   });
 };
 ```
 
-### 3. Suspense 重试机制
+### 3. Suspense Retry Mechanism
 
 ```javascript
-// 当组件因数据加载挂起时，使用 RetryLane 进行重试
+// When components are suspended due to data loading, use RetryLane for retries
 function DataComponent() {
-  const data = useSuspenseQuery(fetchData); // 可能使用 RetryLane
+  const data = useSuspenseQuery(fetchData); // May use RetryLane
   return <div>{data}</div>;
 }
 ```
 
-## 性能优化
+## Performance Optimizations
 
-### 1. 位运算优化
+### 1. Bitwise Optimizations
 
-Lane 系统大量使用位运算，这些操作在现代 CPU 上非常高效：
+The Lane system extensively uses bitwise operations, which are highly efficient on modern CPUs:
 
 ```javascript
-// 获取最高优先级 Lane - O(1) 时间复杂度
+// Get highest priority Lane - O(1) time complexity
 export function getHighestPriorityLane(lanes: Lanes): Lane {
-  return lanes & -lanes; // 利用补码特性
+  return lanes & -lanes; // Leverage two's complement properties
 }
 
-// 检查 Lane 包含关系 - O(1) 时间复杂度
+// Check Lane inclusion - O(1) time complexity
 export function includesSomeLane(a: Lanes | Lane, b: Lanes | Lane): boolean {
   return (a & b) !== NoLanes;
 }
 ```
 
-### 2. 内存优化
+### 2. Memory Optimization
 
-使用 31 位整数可以高效地表示和操作多个优先级：
+Using 31-bit integers efficiently represents and operates on multiple priorities:
 
 ```javascript
-// 单个数字可以表示多个优先级状态
+// A single number can represent multiple priority states
 const pendingLanes = SyncLane | InputContinuousLane | DefaultLane;
 const suspendedLanes = TransitionLane1 | TransitionLane2;
 const pingedLanes = RetryLane1;
 ```
 
-## 调试和开发工具
+## Debugging and Development Tools
 
-### 1. 开发工具集成
+### 1. DevTools Integration
 
 ```javascript
 export function getLabelForLane(lane: Lane): string | void {
@@ -304,17 +304,17 @@ export function getLabelForLane(lane: Lane): string | void {
 }
 ```
 
-### 2. 性能分析
+### 2. Performance Analysis
 
-React DevTools 使用 Lane 标签来显示调度信息，帮助开发者理解应用的更新优先级。
+React DevTools uses Lane labels to display scheduling information, helping developers understand application update priorities.
 
-## 总结
+## Summary
 
-React Fiber Lane 系统是 React 18 并发模式的核心创新，它通过位运算实现了高效的优先级调度。这个系统的主要优势包括：
+The React Fiber Lane system is a core innovation of React 18's concurrent mode, implementing efficient priority scheduling through bitwise operations. The main advantages of this system include:
 
-1. **高性能**: 使用位运算，所有操作都是 O(1) 时间复杂度
-2. **灵活性**: 支持 31 个不同的优先级通道
-3. **智能调度**: 自动处理中断、纠缠和过期机制
-4. **可扩展性**: 易于添加新的优先级类型
+1. **High Performance**: Uses bitwise operations, all operations are O(1) time complexity
+2. **Flexibility**: Supports 31 different priority channels
+3. **Intelligent Scheduling**: Automatically handles interruption, entanglement, and expiration mechanisms
+4. **Extensibility**: Easy to add new priority types
 
-这个系统使得 React 能够在保持应用响应性的同时，智能地调度各种类型的更新，是现代前端框架调度系统的重要创新。
+This system enables React to intelligently schedule various types of updates while maintaining application responsiveness, representing an important innovation in modern frontend framework scheduling systems.
