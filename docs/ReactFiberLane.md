@@ -68,24 +68,24 @@ export const DefaultHydrationLane: Lane = 0b0000000000000000000000000010000;
 
 ```mermaid
 graph TD
-    A[React Fiber Lane System] --> B[Sync Priority]
-    A --> C[Transition Priority]
-    A --> D[Retry Priority]
-    A --> E[Idle Priority]
+    A["React Fiber Lane System"] --> B["Sync Priority"]
+    A --> C["Transition Priority"]
+    A --> D["Retry Priority"]
+    A --> E["Idle Priority"]
     
-    B --> B1[SyncLane<br/>Highest Priority]
-    B --> B2[SyncHydrationLane<br/>SSR Hydration]
-    B --> B3[InputContinuousLane<br/>User Input]
-    B --> B4[DefaultLane<br/>Default Updates]
+    B --> B1["SyncLane<br/>Highest Priority"]
+    B --> B2["SyncHydrationLane<br/>SSR Hydration"]
+    B --> B3["InputContinuousLane<br/>User Input"]
+    B --> B4["DefaultLane<br/>Default Updates"]
     
-    C --> C1[TransitionLane1-10<br/>Immediate Transitions]
-    C --> C2[TransitionLane11-14<br/>Deferred Transitions]
+    C --> C1["TransitionLane1-10<br/>Immediate Transitions"]
+    C --> C2["TransitionLane11-14<br/>Deferred Transitions"]
     
-    D --> D1[RetryLane1-4<br/>Suspense Retries]
+    D --> D1["RetryLane1-4<br/>Suspense Retries"]
     
-    E --> E1[IdleLane<br/>Idle Updates]
-    E --> E2[OffscreenLane<br/>Offscreen Components]
-    E --> E3[DeferredLane<br/>Deferred Updates]
+    E --> E1["IdleLane<br/>Idle Updates"]
+    E --> E2["OffscreenLane<br/>Offscreen Components"]
+    E --> E3["DeferredLane<br/>Deferred Updates"]
     
     style B fill:#ff6b6b
     style C fill:#4ecdc4
@@ -257,11 +257,11 @@ flowchart TD
     F -->|No| H[Compare priorities]
     
     H --> I{Is new lane higher priority?}
-    I -->|Yes| J[Interrupt current work<br/>Start new work]
+    I -->|Yes| J["Interrupt current work<br/>Start new work"]
     I -->|No| K{Is new lane default and current is transition?}
     
-    K -->|Yes| L[Continue current work<br/>Don't interrupt transitions]
-    K -->|No| M[Continue current work<br/>Lower priority]
+    K -->|Yes| L["Continue current work<br/>Don't interrupt transitions"]
+    K -->|No| M["Continue current work<br/>Lower priority"]
     
     style A fill:#e3f2fd
     style C fill:#c8e6c9
@@ -301,10 +301,10 @@ export function getEntangledLanes(root: FiberRoot, renderLanes: Lanes): Lanes {
 
 ```mermaid
 graph TD
-    A[User Event: onClick] --> B[Multiple State Updates]
-    B --> C[Update 1: setCount]
-    B --> D[Update 2: setLoading]
-    B --> E[Update 3: setError]
+    A["User Event: onClick"] --> B["Multiple State Updates"]
+    B --> C["Update 1: setCount"]
+    B --> D["Update 2: setLoading"]
+    B --> E["Update 3: setError"]
     
     C --> F[Lane A]
     D --> G[Lane B]
@@ -317,7 +317,7 @@ graph TD
     I --> J[All Updates Entangled]
     J --> K[Execute Together in Same Batch]
     
-    L[Different Event: onInput] --> M[Single Update]
+    L["Different Event: onInput"] --> M["Single Update"]
     M --> N[Lane D]
     N --> O[No Entanglement]
     O --> P[Execute Independently]
@@ -394,7 +394,7 @@ gantt
 
 ```mermaid
 flowchart TD
-    A[markStarvedLanesAsExpired Called] --> B[Get Current Time]
+    A["markStarvedLanesAsExpired Called"] --> B["Get Current Time"]
     B --> C[Iterate Through Pending Lanes]
     
     C --> D{Is Lane Retry Lane?}
@@ -523,21 +523,21 @@ const pingedLanes = RetryLane1;
 ```mermaid
 graph LR
     subgraph "Traditional Priority Queue"
-        A[Array of Objects] --> B[Sort by Priority]
-        B --> C[O(n log n) Complexity]
-        C --> D[Memory Overhead]
+        A["Array of Objects"] --> B["Sort by Priority"]
+        B --> C["O(n log n) Complexity"]
+        C --> D["Memory Overhead"]
     end
     
     subgraph "React Lane System"
-        E[31-bit Integer] --> F[Bitwise Operations]
-        F --> G[O(1) Complexity]
-        G --> H[Minimal Memory]
+        E["31-bit Integer"] --> F["Bitwise Operations"]
+        F --> G["O(1) Complexity"]
+        G --> H["Minimal Memory"]
     end
     
-    I[Performance Comparison] --> A
+    I["Performance Comparison"] --> A
     I --> E
     
-    J[Speed: 1000x Faster] --> K[Memory: 10x Less]
+    J["Speed: 1000x Faster"] --> K["Memory: 10x Less"]
     
     style A fill:#ffcdd2
     style C fill:#ffcdd2
@@ -553,19 +553,19 @@ graph LR
 
 ```mermaid
 graph TD
-    A[Lanes: 0b0000000000000000000000000001010] --> B[SyncLane: 0b0000000000000000000000000000010]
-    A --> C[DefaultLane: 0b0000000000000000000000000100000]
+    A["Lanes: 0b0000000000000000000000000001010"] --> B["SyncLane: 0b0000000000000000000000000000010"]
+    A --> C["DefaultLane: 0b0000000000000000000000000100000"]
     
-    B --> D[getHighestPriorityLane]
-    D --> E[lanes & -lanes]
-    E --> F[0b0000000000000000000000000000010]
+    B --> D["getHighestPriorityLane"]
+    D --> E["lanes & -lanes"]
+    E --> F["0b0000000000000000000000000000010"]
     
-    G[Check Inclusion] --> H[lanes & SyncLane]
-    H --> I[0b0000000000000000000000000000010]
-    I --> J[!== NoLanes = true]
+    G["Check Inclusion"] --> H["lanes & SyncLane"]
+    H --> I["0b0000000000000000000000000000010"]
+    I --> J["!== NoLanes = true"]
     
-    K[Merge Lanes] --> L[SyncLane | DefaultLane]
-    L --> M[0b0000000000000000000000000100010]
+    K["Merge Lanes"] --> L["SyncLane | DefaultLane"]
+    L --> M["0b0000000000000000000000000100010"]
     
     style A fill:#e3f2fd
     style F fill:#c8e6c9
