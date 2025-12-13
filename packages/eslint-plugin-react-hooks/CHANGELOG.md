@@ -1,3 +1,16 @@
+## 7.0.1
+
+- Disallowed passing inline `useEffectEvent` values as JSX props to guard against accidental propagation. ([#34820](https://github.com/facebook/react/pull/34820) by [@jf-eirinha](https://github.com/jf-eirinha))
+- Switch to `export =` so eslint-plugin-react-hooks emits correct types for consumers in Node16 ESM projects. ([#34949](https://github.com/facebook/react/pull/34949) by [@karlhorky](https://github.com/karlhorky))
+- Tightened the typing of `configs.flat` so the `configs` export is always defined. ([#34950](https://github.com/facebook/react/pull/34950) by [@poteto](https://github.com/poteto))
+- Fix named import runtime errors. ([#34951](https://github.com/facebook/react/pull/34951), [#34953](https://github.com/facebook/react/pull/34953) by [@karlhorky](https://github.com/karlhorky))
+
+## 7.0.0
+
+This release slims down presets to just 2 configurations (`recommended` and `recommended-latest`), and all compiler rules are enabled by default.
+
+- **Breaking:** Removed `recommended-latest-legacy` and `flat/recommended` configs. The plugin now provides `recommended` (legacy and flat configs with all recommended rules),  and `recommended-latest` (legacy and flat configs with all recommended rules plus new bleeding edge experimental compiler rules). ([@poteto](https://github.com/poteto) in [#34757](https://github.com/facebook/react/pull/34757))
+
 ## 6.1.1
 
 **Note:** 6.1.0 accidentally allowed use of `recommended` without flat config, causing errors when used with ESLint v9's `defineConfig()` helper. This has been fixed in 6.1.1.
