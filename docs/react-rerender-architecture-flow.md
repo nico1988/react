@@ -81,25 +81,26 @@ This file is intended for engineers who want a clear reference for how React's r
 
 ```mermaid
 flowchart TD
-  E(setState / dispatch / props change) --> S[scheduleUpdateOnFiber(root, fiber, lane)]
-  S --> M[markRootUpdated(root, lane)]
-  M --> Q[ensureRootIsScheduled(root)]
-  Q --> R[ReactFiberRootScheduler -> scheduleCallback -> performWorkOnRoot(root, lanes)]
-  R --> choose{shouldTimeSlice?}
-  choose -->|yes| RC[renderRootConcurrent]
-  choose -->|no| RS[renderRootSync]
-  RC & RS --> prep[prepareFreshStack / workLoop]
-  prep --> Begin[beginWork -> reconcileChildFibers]
-  Begin --> Complete[completeWork -> build effect list]
-  Complete --> WorkLoop[workLoop (might yield)]
-  WorkLoop --> Finished[finishedWork]
-  Finished --> CommitDecide[finishConcurrentRender]
-  CommitDecide -->|commit| Commit[commitRoot]
-  Commit --> Before[commitBeforeMutationEffects]
-  Before --> Mutation[commitMutationEffects]
-  Mutation --> Layout[commitLayoutEffects]
-  Layout --> Passive[flushPassiveEffects]
-  Passive --> Done
+  E["setState / dispatch / props change"] --> S["scheduleUpdateOnFiber(root, fiber, lane)"]
+  S --> M["markRootUpdated(root, lane)"]
+  M --> Q["ensureRootIsScheduled(root)"]
+  Q --> R["ReactFiberRootScheduler -> scheduleCallback -> performWorkOnRoot(root, lanes)"]
+  R --> choose{ "shouldTimeSlice?" }
+  choose -->|yes| RC["renderRootConcurrent"]
+  choose -->|no| RS["renderRootSync"]
+  RC --> prep["prepareFreshStack / workLoop"]
+  RS --> prep
+  prep --> Begin["beginWork -> reconcileChildFibers"]
+  Begin --> Complete["completeWork -> build effect list"]
+  Complete --> WorkLoop["workLoop (might yield)"]
+  WorkLoop --> Finished["finishedWork"]
+  Finished --> CommitDecide["finishConcurrentRender"]
+  CommitDecide -->|commit| Commit["commitRoot"]
+  Commit --> Before["commitBeforeMutationEffects"]
+  Before --> Mutation["commitMutationEffects"]
+  Mutation --> Layout["commitLayoutEffects"]
+  Layout --> Passive["flushPassiveEffects"]
+  Passive --> Done["done"]
 
 ```
 
