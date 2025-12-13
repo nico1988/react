@@ -85,7 +85,7 @@ flowchart TD
   S --> M["markRootUpdated(root, lane)"]
   M --> Q["ensureRootIsScheduled(root)"]
   Q --> R["ReactFiberRootScheduler -> scheduleCallback -> performWorkOnRoot(root, lanes)"]
-  R --> choose{ "shouldTimeSlice?" }
+  R --> choose{Should Time Slice?}
   choose -->|yes| RC["renderRootConcurrent"]
   choose -->|no| RS["renderRootSync"]
   RC --> prep["prepareFreshStack / workLoop"]
