@@ -103,23 +103,23 @@ Mermaid flowchart:
 
 ```mermaid
 flowchart TD
-    A[getNextLanes(root)] --> B{pendingLanes === NoLanes}
-    B -->|Yes| C[NoLanes]
-    B -->|No| D[Compute nonIdlePendingLanes]
-    D --> E{nonIdlePendingLanes !== NoLanes}
-    E -->|Yes| F[nonIdleUnblocked = & ~suspended]
-    F --> G{nonIdleUnblocked !== NoLanes}
-    G -->|Yes| H[getHighestPriorityLanes(nonIdleUnblocked)]
-    G -->|No| I[nonIdlePinged = & pingedLanes]
-    I --> J{nonIdlePinged !== NoLanes}
-    J -->|Yes| K[getHighestPriorityLanes(nonIdlePinged)]
-    J -->|No| L[Prewarm or fallback] 
-    E -->|No| M[Handle only idle/Offscreen/Deferred work similarly]
+  A["getNextLanes(root)"] --> B{"pendingLanes === NoLanes"}
+  B -->|Yes| C["Return NoLanes"]
+  B -->|No| D["Compute nonIdlePendingLanes"]
+  D --> E{"nonIdlePendingLanes !== NoLanes"}
+  E -->|Yes| F["nonIdleUnblocked = nonIdlePendingLanes & ~suspended"]
+  F --> G{"nonIdleUnblocked !== NoLanes"}
+  G -->|Yes| H["getHighestPriorityLanes(nonIdleUnblocked)"]
+  G -->|No| I["nonIdlePinged = nonIdlePendingLanes & pingedLanes"]
+  I --> J{"nonIdlePinged !== NoLanes"}
+  J -->|Yes| K["getHighestPriorityLanes(nonIdlePinged)"]
+  J -->|No| L["Prewarm or fallback"]
+  E -->|No| M["Handle only idle/Offscreen/Deferred work similarly"]
 
-    style H fill:#c8e6c9
-    style K fill:#c8e6c9
-    style L fill:#fff3e0
-    style M fill:#fff3e0
+  style H fill:#c8e6c9
+  style K fill:#c8e6c9
+  style L fill:#fff3e0
+  style M fill:#fff3e0
 ```
 
 ---
